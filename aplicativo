@@ -1,0 +1,793 @@
+#Importações
+from tkinter import *
+from thermo.chemical import Chemical
+from thermo import ChemicalConstantsPackage
+from thermo.interaction_parameters import IPDB
+import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+
+#-----------------------------------------------------------------------------------------------------------------------
+#GUI - Início - Primeiro Nível
+root = Tk()
+root.title('Thermo PySoup')
+root.geometry('1400x1500')
+root.configure(background='#280659',relief='solid')
+root.iconbitmap('iconeSoup.ico')
+#-----------------------------------------------------------------------------------------------------------------------
+# Menus da Aplicação
+
+apresentacao ='******** Thermo PySoup - Versão 1.0 ********\n'
+instrucao = '***** Instruções *****\n'
+
+texto_ajuda = '* Leitura na Horizontal da Esquerda para a Direita\n\n' \
+              '* Selecionar se o caso é para Substância Pura ou Mistura de Dois Componentes\n' \
+              ' -> Digitar o(s) componentes com seus respectivos nomes em Inglês\n' \
+              ' -> Botão de Salvar retorna os valores digitados para efeito de comparação\n\n' \
+              '* Alimentação referente a proporção molar de Alimentação\n' \
+              ' -> Podendo variar de 0.0 a 1.0\n\n' \
+              '* Temperatura e Pressão seguindo o S.I\n' \
+              ' -> Utilizar Kelvin e MPa, respectivamente\n\n' \
+              '* Selecionar Equação de Estado Cúbica conforme faixas de operação\n\n' \
+              '* Gráfico gerado:\n  ->Eixo X: Unidade de Volume em Metros Cúbicos(m³)\n' \
+              ' -> Eixo Y: Unidade de Pressão em MPa'
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Ajuda ao Usuário
+
+def caixa_de_ajuda():
+    ajuda = Toplevel()
+    ajuda.geometry('850x800')
+    ajuda.title('Menu de Ajuda')
+
+    apresentação = Label(ajuda, text= apresentacao, font='Arial 24',fg='#280659').pack()
+    instruçao = Label(ajuda, text= instrucao, font='Arial 21',fg='#21ce9c').pack()
+    texto_de_ajuda = Label(ajuda, text= texto_ajuda, font='Arial 18').pack()
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Sobre
+textosobre = 'Aplicação de Cunho Pedagógico para a Disciplina:\nTrabalho Final de Curso\n\n' \
+              'Desenvolvido por: Artur Amaral Corrêa de Moraes\n\n' \
+              ' -> e-mail: arturamaralc@gmail.com\n' \
+              ' \t-> GitHub: https://github.com/ArturAmaral20'
+
+
+
+def caixa_Sobre():
+    sobre = Toplevel()
+    sobre.geometry('850x400')
+    sobre.title('Menu Sobre')
+
+    inicio = Label(sobre, text=apresentacao, font='Arial 24',fg='#280659').pack()
+    sobre_label = Label(sobre, text='Sobre', font='Arial 21', fg='#21ce9c').pack()
+    texto_sobre = Label(sobre, text=textosobre, font='Arial 18').pack()
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+
+meuMenu = Menu(root)
+meuMenu.add_command(label='Ajuda',command= caixa_de_ajuda)
+meuMenu.add_command(label='Sobre',command = caixa_Sobre)
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Número de Componentes
+
+numero_de_componentes = IntVar()
+def mostrarvalorcomponentes():
+    print(f' O número de componentes selecionados foi: {numero_de_componentes.get()}')
+    return (f' O número de componentes selecionados foi: {numero_de_componentes.get()}')
+
+label = Label(text=' Substância Pura\n ou Multicomponente',font='Georgia 22',
+              padx=5,pady=10,bd=5,background='#280659',fg='white').grid(row=0,column=0)
+ra_1 = Radiobutton(text='Substância Pura',font='Garamond 17', variable=numero_de_componentes, value=1, command=mostrarvalorcomponentes,
+                   padx=5,pady=5,bd=2,background='#280659',fg='white',selectcolor='black').grid(row=2,column=0)
+ra_2 = Radiobutton(text='Multicomponente',font='Garamond 17', variable=numero_de_componentes, value=2, command=mostrarvalorcomponentes,
+              padx=5,pady=5,bd=2,background='#280659',fg='white',selectcolor='black').grid(row=4,column=0)
+label_1 = Label(text='',padx=5,pady=5,bd=2,background='#280659',fg='white').grid(row=1,column=0)
+label_2 = Label(text='',padx=5,pady=5,bd=2,background='#280659',fg='white').grid(row=3,column=0)
+label_3 = Label(text='',padx=5,pady=5,bd=2,background='#280659',fg='white').grid(row=5,column=0)
+label_4 = Label(text='',padx=5,pady=5,bd=2,background='#280659',fg='white').grid(row=6,column=0)
+
+#-----------------------------------------------------------------------------------------------------------------------
+#Determinando os Componentes
+
+
+comp = StringVar()
+comp2 = StringVar()
+comp_text = StringVar()
+
+def mostrarcomponentes():
+    print(comp.get(), comp2.get())
+    comp_text.set(f'Componente 1: {comp.get()}\n'
+                       f'Componente 2: {comp2.get()} ')
+    return (f'Componente 1: {comp.get()}\n'
+                       f'Componente 2: {comp2.get()} ')
+
+
+
+label1 = Label(text='Componentes', font='Georgia 22',border=20,
+               padx=10,pady=10,bd=5,width=30,background='#280659',fg='white').grid(row=0,column=1)
+
+labelc1 = Label(text='Componente 1:', font='Garamond 17',background='#280659',fg='white').grid(row=1,column=1)
+entryc1 = Entry(textvariable=comp).grid(row=2,column=1)
+
+labelc2 = Label(text='Componente 2:', font='Garamond 17',background='#280659',fg='white').grid(row=3,column=1)
+entryc2 = Entry(textvariable=comp2).grid(row=4,column=1)
+
+cmd = Button(text='Salvar', font='Garamond 17', command=mostrarcomponentes).grid(row=5,column=1)
+labelRetornoComp = Label(textvariable=comp_text,background='#280659',fg='white').grid(row=6,column=1)
+
+#-----------------------------------------------------------------------------------------------------------------------
+#Alimentação dos Componentes
+
+entrada1 = StringVar()
+entrada2 = StringVar()
+comp_ali_text = StringVar()
+
+def mostrarAlimentacaoComponentes():
+    print(entrada1.get(), entrada2.get())
+    comp_ali_text.set(f'Alimentação Componente 1: {entrada1.get()}\n'
+                       f'Alimentação Componente 2: {entrada2.get()} ')
+    return (f'Alimentação Componente 1: {entrada1.get()}\n'
+                       f'Alimentação Componente 2: {entrada2.get()} ')
+
+
+
+label1 = Label(text='Alimentação', font='Georgia 22',border=20,
+               padx=10,pady=10,bd=5,width=31,background='#280659',fg='white').grid(row=0,column=2)
+
+labelc1 = Label(text='Componente 1:', font='Garamond 17',background='#280659',fg='white').grid(row=1,column=2)
+entryc1 = Entry(textvariable=entrada1).grid(row=2,column=2)
+
+labelc2 = Label(text='Componente 2:', font='Garamond 17',background='#280659',fg='white').grid(row=3,column=2)
+entryc2 = Entry(textvariable=entrada2).grid(row=4,column=2)
+
+cmd = Button(text='Salvar', font='Garamond 18', command=mostrarAlimentacaoComponentes).grid(row=5,column=2)
+labelRetornoComp = Label(textvariable=comp_ali_text,background='#280659',fg='white').grid(row=6,column=2)
+
+#-----------------------------------------------------------------------------------------------------------------------
+#Entrada das Variáveis
+T = StringVar()
+P = StringVar()
+temp_text = StringVar()
+
+def mostrarentradaTeP():
+    print(T.get(),P.get())
+    temp_text.set(f'A temperatura escolhida foi: {T.get()} K\n'
+                       f'A pressão escolhida foi: {P.get()} MPa')
+
+    return (f'A temperatura escolhida foi: {T.get()} K\n'
+                       f'A pressão escolhida foi: {P.get()} MPa')
+
+
+label1 = Label(text='Valores de Entrada',font='Georgia 18',border=20,width=30,
+               padx=10,pady=10,bd=5,background='#280659',fg='white').grid(row=7,column=0)
+
+labelt = Label(text='Temperatura (K):', font='Garamond 16',background='#280659',fg='white',
+               padx=10,pady=10).grid(row=8,column=0)
+entryt = Entry(textvariable=T).grid(row=9,column=0)
+
+labelp = Label(text='Pressão (MPa):', font='Garamond 16',background='#280659',fg='white',
+               padx=10,pady=10).grid(row=10,column=0)
+labelp_vazio = Label(text='',background='#280659').grid(row=12,column=0)
+entryp = Entry(textvariable=P).grid(row=11,column=0)
+
+cmd = Button(text='Salvar',font='Garamond 18',command=mostrarentradaTeP).grid(row=13,column=0)
+labelRetornoTemp = Label(textvariable=temp_text,background='#280659',fg='white').grid(row=14,column=0)
+
+#-----------------------------------------------------------------------------------------------------------------------
+#Equações
+valor_equacao = IntVar()
+
+
+def mostrarEquacao():
+    if(valor_equacao.get() == 1):
+        print(f'A Equação selecionada foi Van der Waals')
+        return 'A Equação selecionada foi Van der Waals'
+    if (valor_equacao.get() == 2):
+        print(f'A Equação selecionada foi Redlich Kwong')
+        return 'A Equação selecionada foi Redlich Kwong'
+    if (valor_equacao.get() == 3):
+        print(f'A Equação selecionada foi Peng-Robinson')
+        return 'A Equação selecionada foi Peng-Robinson'
+    if (valor_equacao.get() == 4):
+        print(f'A Equação selecionada foi Soave Redlich Kwong')
+        return 'A Equação selecionada foi Soave Redlich Kwong'
+    if (valor_equacao.get() == 5):
+        print(f'A Equação selecionada foi para Gás Ideal')
+        return 'A Equação selecionada foi Gás Ideal'
+
+
+
+
+label = Label(text=' Selecionar Equação de Estado Cúbica',font='Georgia 18',border=20,width=30,
+               padx=10,pady=10,bd=5,background='#280659',fg='white').grid(row=7,column=1)
+ra_1 = Radiobutton(text='Van der Waals',font='Garamond 16', variable=valor_equacao, value=1, command=mostrarEquacao,
+                   background='#280659',fg='white',selectcolor='black').grid(row=8,column=1)
+ra_2 = Radiobutton(text='Redlich Kwong',font='Garamond 16', variable=valor_equacao, value=2, command=mostrarEquacao,
+                   background='#280659',fg='white',selectcolor='black').grid(row=9,column=1)
+ra_3 = Radiobutton(text='Peng-Robinson',font='Garamond 16', variable=valor_equacao, value=3, command=mostrarEquacao,
+                   background='#280659',fg='white',selectcolor='black').grid(row=10,column=1)
+ra_4 = Radiobutton(text='Soave Redlich Kwong',font='Garamond 16', variable=valor_equacao, value=4, command=mostrarEquacao,
+                   background='#280659',fg='white',selectcolor='black').grid(row=11,column=1)
+ra_5 = Radiobutton(text='Gás Ideal',font='Garamond 16', variable=valor_equacao, value=5, command=mostrarEquacao,
+                   background='#280659',fg='white',selectcolor='black').grid(row=12,column=1)
+
+#-----------------------------------------------------------------------------------------------------------------------
+
+#Parte 2 - Top Level
+
+def abrir():
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+
+                                                #Termodinâmica
+
+#-----------------------------------------------------------------------------------------------------------------------
+#Propriedades Físicas dos Compostos
+
+    composto1 = Chemical(comp.get())
+    Tc1 = composto1.Tc
+    Pc1 = composto1.Pc
+    omega1 = composto1.omega
+
+    if numero_de_componentes.get() == 2:
+        composto2 = Chemical(comp2.get())
+        Tc2 = composto2.Tc
+        Pc2 = composto2.Pc
+        omega2 = composto2.omega
+
+        constants, correlations = ChemicalConstantsPackage.from_IDs([composto1.ID, composto2.ID])
+        kijs = IPDB.get_ip_asymmetric_matrix('ChemSep PR', constants.CASs, 'kij')
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Modificando o tipo das variáveis para se ajustar ao cálculo
+
+    Tcalc = float(T.get())
+    Pcalc = float(P.get())
+    Pcalc = Pcalc*1000000
+    Tc1calc = float(Tc1)
+    Pc1calc = float(Pc1)
+    entrada1calc = float(entrada1.get())
+    omega1calc = float(omega1)
+
+    if numero_de_componentes.get() == 2:
+        Tc2calc = float(Tc2)
+        Pc2calc = float(Pc2)
+        entrada2calc = float(entrada2.get())
+        omega2calc = float(omega2)
+
+#-----------------------------------------------------------------------------------------------------------------------
+#Definindo Equação de Estado Cúbica
+
+    if numero_de_componentes.get() == 1:
+        if (valor_equacao.get() == 1):
+            from thermo.eos import VDW
+
+            eos = VDW(Tc1calc, Pc1calc, Tcalc, Pcalc)
+            print(eos)
+
+        if (valor_equacao.get() == 2):
+            from thermo.eos import RK
+
+            eos = RK(Tc1calc, Pc1calc, Tcalc, Pcalc)
+            print(eos)
+
+
+        if (valor_equacao.get() == 3):
+            from thermo.eos import PR
+
+            eos = PR(Tc1calc, Pc1calc, omega1calc, Tcalc, Pcalc)
+            print(eos)
+
+        if (valor_equacao.get() == 4):
+            from thermo.eos import SRK
+
+            eos = SRK(Tc1calc, Pc1calc, omega1calc, Tcalc, Pcalc)
+            print(eos)
+
+
+
+        if (valor_equacao.get() == 5):
+            from thermo.eos_volume import volume_solutions_ideal
+        
+            eos = volume_solutions_ideal(Tcalc, Pcalc)
+            print(eos)
+
+    if numero_de_componentes.get() == 2:
+        if (valor_equacao.get() == 1):
+            from thermo.eos_mix import VDWMIX
+
+            eos = VDWMIX(T=Tcalc, P=Pcalc, Tcs=[Tc1calc, Tc2calc], Pcs=[Pc1calc, Pc2calc], omegas=[1, 1], kijs=kijs, zs=[entrada1calc, entrada2calc])
+            print(eos)
+            print(eos.V_l, eos.V_g)
+            print(eos.fugacities_l, eos.fugacities_g)
+
+        if (valor_equacao.get() == 2):
+            from thermo.eos_mix import RKMIX
+
+            eos = RKMIX(T=Tcalc, P=Pcalc, Tcs=[Tc1calc, Tc2calc], Pcs=[Pc1calc, Pc2calc], kijs=kijs, zs=[entrada1calc, entrada2calc])
+            print(eos)
+            #print(eos.V_l, eos.V_g)
+            #print(eos.fugacities_l, eos.fugacities_g)
+
+        if (valor_equacao.get() == 3):
+            from thermo.eos_mix import PRMIX
+
+            eos = PRMIX(T=Tcalc, P=Pcalc, Tcs=[Tc1calc, Tc2calc], Pcs=[Pc1calc, Pc2calc], omegas=[omega1calc, omega2calc], kijs=kijs, zs=[entrada1calc, entrada2calc])
+            print(eos)
+            print(eos.V_l, eos.V_g)
+            print(eos.fugacities_l, eos.fugacities_g)
+
+        if (valor_equacao.get() == 4):
+            from thermo.eos_mix import SRKMIX
+
+            eos = SRKMIX(T=Tcalc, P=Pcalc, Tcs=[Tc1calc, Tc2calc], Pcs=[Pc1calc, Pc2calc], omegas=[omega1calc, omega2calc], kijs=kijs, zs=[entrada1calc, entrada2calc])
+            print(eos)
+            print(eos.V_l, eos.V_g)
+            print(eos.fugacities_l, eos.fugacities_g)
+
+
+
+        if (valor_equacao.get() == 5):
+            from thermo.eos_volume import volume_solutions_ideal
+
+            eos = volume_solutions_ideal(Tcalc, Pcalc)
+            print(eos)
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Informações sobre a mistura
+    if (valor_equacao.get() != 5):
+        raizes_da_equacao = eos.raw_volumes
+        raizes_da_equacao = (f'Raízes da equação\n'
+                            f'{raizes_da_equacao[0]:.3e}\n'
+                            f'{raizes_da_equacao[1]:.3e}\n'
+                            f'{raizes_da_equacao[2]:.3e}')
+        fase_do_sistema = eos.phase
+        fase_mais_estavel = eos.more_stable_phase
+
+# Determinando o volume de líquido e gás para a situacão-problema:
+
+    if numero_de_componentes.get() == 1:
+        if (valor_equacao.get() == 1):
+            try:
+                Vg = VDW(Tc1calc, Pc1calc, Tcalc, Pcalc).V_g
+            except:
+                Vg = 0
+            try:
+                Vl = VDW(Tc1calc, Pc1calc, Tcalc, Pcalc).V_l
+            except:
+                Vl = 0
+
+            print('Equacão Cúbica de Estado de VDW')
+            print(f'O volume de líquido é de : {Vl} m³')
+            print(f'O volume de vapor é de : {Vg} m³')
+
+        if (valor_equacao.get() == 2):
+            try:
+                Vg = RK(Tc1calc, Pc1calc, Tcalc, Pcalc).V_g
+            except:
+                Vg = 0
+            try:
+                Vl = RK(Tc1calc, Pc1calc, Tcalc, Pcalc).V_l
+            except:
+                Vl = 0
+
+            print('Equacão Cúbica de Estado de RK')
+            print(f'O volume de líquido é de : {Vl} m³')
+            print(f'O volume de  vapor é de : {Vg} m³')
+
+
+        if (valor_equacao.get() == 3):
+            try:
+                Vg = PR(Tc1calc, Pc1calc, omega1calc, Tcalc, Pcalc).V_g
+            except:
+                Vg = 0
+            try:
+                Vl = PR(Tc1calc, Pc1calc, omega1calc, Tcalc, Pcalc).V_l
+            except:
+                Vl = 0
+
+            print('Equacão Cúbica de Estado de PR')
+            print(f'O volume de líquido é de : {Vl} m³')
+            print(f'O volume de vapor é de : {Vg} m³')
+
+        if (valor_equacao.get() == 4):
+            try:
+                Vg = SRK(Tc1calc, Pc1calc, omega1calc, Tcalc, Pcalc).V_g
+            except:
+                Vg = 0
+            try:
+                Vl = SRK(Tc1calc, Pc1calc, omega1calc, Tcalc, Pcalc).V_l
+            except:
+                Vl = 0
+
+            print('Equacão Cúbica de Estado de SRK')
+            print(f'O volume de líquido é de : {Vl} m³')
+            print(f'O volume de vapor é de : {Vg} m³')
+
+
+
+    if numero_de_componentes.get() == 2:
+        if (valor_equacao.get() == 1):
+            try:
+                Vg = eos.V_g
+            except:
+                Vg = 0
+            try:
+                Vl = eos.V_l
+            except:
+                Vl = 0
+
+            print('Equacão Cúbica de Estado de VDW')
+            print(f'O volume de líquido é de : {Vl} m³')
+            print(f'O volume de vapor é de : {Vg} m³')
+
+        if(valor_equacao.get() == 2):
+            try:
+                Vg = eos.V_g
+            except:
+                Vg = 0
+            try:
+                Vl = eos.V_l
+            except:
+                Vl = 0
+
+            print('Equacão Cúbica de Estado de RK')
+            print(f'O volume de líquido é de : {Vl} m³')
+            print(f'O volume de  vapor é de : {Vg} m³')
+
+        if(valor_equacao.get() == 3):
+            try:
+                Vg = eos.V_g
+            except:
+                Vg = 0
+            try:
+                Vl = eos.V_l
+            except:
+                Vl = 0
+
+            print('Equacão Cúbica de Estado de PR')
+            print(f'O volume de líquido é de : {Vl} m³')
+            print(f'O volume de vapor é de : {Vg} m³')
+
+        if (valor_equacao.get() == 4):
+            try:
+                Vg = eos.V_g
+            except:
+                Vg = 0
+            try:
+                Vl = eos.V_l
+            except:
+                Vl = 0
+
+            print('Equacão Cúbica de Estado de SRK')
+            print(f'O volume de líquido é de : {Vl} m³')
+            print(f'O volume de vapor é de : {Vg} m³')
+
+#-----------------------------------------------------------------------------------------------------------------------
+#Determinando as Propriedades Saturadas
+    try:
+        Psat = eos.Psat(Tcalc)
+    except:
+        print('Está além da temperatura crítica')
+
+    try:
+        VlSat = eos.V_l_sat(Tcalc)
+        VgSat = eos.V_g_sat(Tcalc)
+        print(f'Vl sat = {VlSat} m³\nVg sat = {VgSat} m³')
+    except:
+        print('Está além da temperatura crítica')
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Gráfico
+    try:
+        Volume_liq_eixox = list()
+        Volume_gas_eixox = list()
+        Pressao_eixoy = list()
+
+        Pcalc = 1000
+
+        if numero_de_componentes.get() == 1:
+            if (valor_equacao.get() == 1):
+                for Pcalc in range(Pcalc, 1150 * Pcalc, 100):
+                    Vg = VDW(Tc1calc, Pc1calc, Tcalc, Pcalc).V_g
+                    Volume_gas_eixox.append(Vg)
+
+                    Vl = VDW(Tc1calc, Pc1calc, Tcalc, Pcalc).V_l
+                    Volume_liq_eixox.append(Vl)
+
+                    Pressao_eixoy.append(Pcalc)
+
+                print(Pressao_eixoy)
+                print(Volume_liq_eixox)
+                print(Volume_gas_eixox)
+
+            if (valor_equacao.get() == 2):
+                for Pcalc in range(Pcalc, 1150 * Pcalc, 100):
+                    Vg = RK(Tc1calc, Pc1calc, Tcalc, Pcalc).V_g
+                    Volume_gas_eixox.append(Vg)
+
+                    Vl = RK(Tc1calc, Pc1calc, Tcalc, Pcalc).V_l
+                    Volume_liq_eixox.append(Vl)
+
+                    Pressao_eixoy.append(Pcalc)
+
+                print(Pressao_eixoy)
+                print(Volume_liq_eixox)
+                print(Volume_gas_eixox)
+
+
+            if (valor_equacao.get() == 3):
+                for Pcalc in range(Pcalc, 1150 * Pcalc, 100):
+                    Vg = PR(Tc1calc, Pc1calc, omega1calc, Tcalc, Pcalc).V_g
+                    Volume_gas_eixox.append(Vg)
+
+                    Vl = PR(Tc1calc, Pc1calc, omega1calc, Tcalc, Pcalc).V_l
+                    Volume_liq_eixox.append(Vl)
+
+                    Pressao_eixoy.append(Pcalc)
+
+                print(Pressao_eixoy)
+                print(Volume_liq_eixox)
+                print(Volume_gas_eixox)
+
+            if (valor_equacao.get() == 4):
+                for Pcalc in range(Pcalc, 1150 * Pcalc, 100):
+                    Vg = SRK(Tc1calc, Pc1calc, omega1calc, Tcalc, Pcalc).V_g
+                    Volume_gas_eixox.append(Vg)
+
+                    Vl = SRK(Tc1calc, Pc1calc, omega1calc, Tcalc, Pcalc).V_l
+                    Volume_liq_eixox.append(Vl)
+
+                    Pressao_eixoy.append(Pcalc)
+
+                print(Pressao_eixoy)
+                print(Volume_liq_eixox)
+                print(Volume_gas_eixox)
+    except:
+        print('Gráfico não será criado\nValores acima do ponto crítico!')
+
+    try:
+        if numero_de_componentes.get() == 2:
+            if (valor_equacao.get() == 1):
+                for Pcalc in range(Pcalc, 1150 * Pcalc, 100):
+                    Vg = VDWMIX(T=Tcalc, P=Pcalc, Tcs=[Tc1calc, Tc2calc], Pcs=[Pc1calc, Pc2calc], omegas=[1, 1], kijs=kijs, zs=[entrada1calc, entrada2calc]).V_g
+                    Volume_gas_eixox.append(Vg)
+
+                    Vl = VDWMIX(T=Tcalc, P=Pcalc, Tcs=[Tc1calc, Tc2calc], Pcs=[Pc1calc, Pc2calc], omegas=[1, 1], kijs=kijs, zs=[entrada1calc, entrada2calc]).V_l
+                    Volume_liq_eixox.append(Vl)
+
+                    Pressao_eixoy.append(Pcalc)
+
+                print(Pressao_eixoy)
+                print(Volume_liq_eixox)
+                print(Volume_gas_eixox)
+
+            if(valor_equacao.get() == 2):
+              for Pcalc in range(Pcalc, 1150*Pcalc,100):
+                Vg = RKMIX(T=Tcalc, P=Pcalc, Tcs=[Tc1calc, Tc2calc], Pcs=[Pc1calc, Pc2calc], kijs=kijs, zs=[entrada1calc, entrada2calc]).V_g
+                Volume_gas_eixox.append(Vg)
+
+                Vl = RKMIX(T=Tcalc, P=Pcalc, Tcs=[Tc1calc, Tc2calc], Pcs=[Pc1calc, Pc2calc], kijs=kijs, zs=[entrada1calc, entrada2calc]).V_l
+                Volume_liq_eixox.append(Vl)
+
+                Pressao_eixoy.append(Pcalc)
+
+
+              print(Pressao_eixoy)
+              print(Volume_liq_eixox)
+              print(Volume_gas_eixox)
+
+
+
+            if(valor_equacao.get() == 3):
+              for Pcalc in range(Pcalc, 1150*Pcalc,100):
+                Vg = PRMIX(T=Tcalc, P=Pcalc, Tcs=[Tc1calc, Tc2calc], Pcs=[Pc1calc, Pc2calc], omegas=[omega1calc, omega2calc], kijs=kijs, zs=[entrada1calc, entrada2calc]).V_g
+                Volume_gas_eixox.append(Vg)
+
+                Vl = PRMIX(T=Tcalc, P=Pcalc, Tcs=[Tc1calc, Tc2calc], Pcs=[Pc1calc, Pc2calc], omegas=[omega1calc, omega2calc], kijs=kijs, zs=[entrada1calc, entrada2calc]).V_l
+                Volume_liq_eixox.append(Vl)
+
+                Pressao_eixoy.append(Pcalc)
+
+
+              print(Pressao_eixoy)
+              print(Volume_liq_eixox)
+              print(Volume_gas_eixox)
+
+            if (valor_equacao.get() == 4):
+                for Pcalc in range(Pcalc, 1150 * Pcalc, 100):
+                    Vg = SRKMIX(T=Tcalc, P=Pcalc, Tcs=[Tc1calc, Tc2calc], Pcs=[Pc1calc, Pc2calc],
+                               omegas=[omega1calc, omega2calc], kijs=kijs, zs=[entrada1calc, entrada2calc]).V_g
+                    Volume_gas_eixox.append(Vg)
+
+                    Vl = SRKMIX(T=Tcalc, P=Pcalc, Tcs=[Tc1calc, Tc2calc], Pcs=[Pc1calc, Pc2calc],
+                               omegas=[omega1calc, omega2calc], kijs=kijs, zs=[entrada1calc, entrada2calc]).V_l
+                    Volume_liq_eixox.append(Vl)
+
+                    Pressao_eixoy.append(Pcalc)
+
+                print(Pressao_eixoy)
+                print(Volume_liq_eixox)
+                print(Volume_gas_eixox)
+    except:
+        print('Não será criado o Gráfico.\nEstá acima do ponto crítico!')
+#-----------------------------------------------------------------------------------------------------------------------
+#Criando o Gráfico
+
+    try:
+        plt.title(f'Envelope de Equilíbrio')
+        plt.ylabel('Pressão (Pa)')
+        plt.xlabel('Volume (M³)')
+        plt.plot(Volume_gas_eixox, Pressao_eixoy,color='#280659')
+        plt.plot(Volume_liq_eixox, Pressao_eixoy,color='#21ce9c')
+        plt.rcParams["figure.figsize"] = (5, 3)
+        plt.xlim(-0.01,0.09)
+        plt.axhline(y=Psat, xmin=0, xmax=1,color='y')
+        data = [
+            [VlSat, Psat],
+            [VgSat, Psat],
+            [Vl, Pcalc],
+            [Vg, Pcalc],
+        ]
+
+        x, y = zip(*data)
+        plt.scatter(x, y)
+
+        plt.annotate('Vl sat',
+              horizontalalignment = 'right',
+              verticalalignment = 'bottom',
+              xy = (VlSat, Psat),
+              arrowprops = dict(facecolor = 'green', shrink = 0.05))
+
+        plt.annotate('Vg sat',
+              horizontalalignment = 'left',
+              verticalalignment = 'bottom',
+              xy = (VgSat, Psat),
+              arrowprops = dict(facecolor = 'green', shrink = 0.05))
+
+        plt.legend(['Vg', 'Vl', 'Psat'], loc=0) #Varia de 0 a 9
+        #plt.grid()
+        #plt.show()
+        plt.savefig('grafico.png')
+        #plt.close()
+    except:
+        print('Sem gráfico para a situação!\nAcima do ponto crítico')
+
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+#GUI - Início - Segundo Nível
+
+    top = Toplevel()
+    top.geometry('1400x800')
+    top.config(background='#280659')
+
+
+    if numero_de_componentes.get() == 1:
+        label_dados_componentes = Label(top, text=f'Dados dos composto {comp.get()}',font='Georgia 20',
+                                        background='#280659',fg='white').grid(row=0, column=0)
+        label_componente1 = Label(top, text=f'Temperatura Crítica Composto 1= {Tc1}\nPressão Crítica Composto1={Pc1}\nFator de Acentricidade1 ={omega1}',
+                                  background='#280659',fg='white').grid(row=1, column=0)
+
+
+        label_informacoes = Label(top, text='Informações sobre o composto',font='Georgia 20',
+                                  background='#280659',fg='white').grid(row=0, column=1)
+        label_raizes = Label(top, text=raizes_da_equacao,
+                             background='#280659',fg='white').grid(row=1, column=1)
+        label_fase = Label(top, text=f'O sistema se encontra na(s) seguinte(s) fase(s): {fase_do_sistema}',
+                           background='#280659',fg='white').grid(row=2, column=1)
+        label_mais_estavel = Label(top, text=f'A fase mais estável é a fase: {fase_mais_estavel}',
+                                   background='#280659',fg='white').grid(row=3, column=1)
+
+        label_volumes = Label(top, text='Volumes obtidos',font='Georgia 16',
+                              background='#280659',fg='white').grid(row=2, column=0)
+        label_Vl = Label(top, text=f'O volume de líquido é de : {Vl:.3e} m³',
+                         background='#280659',fg='white').grid(row=3, column=0)
+        label_Vg = Label(top, text=f'O volume de vapor é de : {Vg:.3e} m³',
+                         background='#280659',fg='white').grid(row=4, column=0)
+        label_soma = Label(top, text=f'O volume total é de : {(Vg + Vl):.3e} m³',
+                                 background='#280659',fg='white').grid(row=5, column=0)
+        label_usu6 = Label(top, text='',
+                                 background='#280659',fg='white').grid(row=6, column=0)
+
+
+        label_Prop_Saturadas = Label(top, text='Valores das Propriedades Saturadas',font='Georgia 16',
+                                     background='#280659',fg='white').grid(row=4, column=1)
+        label_PSat = Label(top, text=f'Pressão Saturada = {Psat:.3e} Pa',
+                           background='#280659',fg='white').grid(row=5, column=1)
+        label_Vl_Sat = Label(top, text=f'Volume de Líquido Saturado = {VlSat:.3e} m³',
+                             background='#280659',fg='white').grid(row=6, column=1)
+        label_Vg_Sat = Label(top, text=f'Volume de Gás Saturado = {VgSat:.3e} m³',
+                             background='#280659',fg='white').grid(row=7, column=1)
+
+        label_usu1 = Label(top, text='',
+                                 background='#280659',fg='white').grid(row=4, column=0)
+        label_usu2 = Label(top, text='',
+                                 background='#280659',fg='white').grid(row=5, column=0)
+        label_usu3 = Label(top, text='',
+                                 background='#280659',fg='white').grid(row=6, column=0)
+
+
+        text_usuario = StringVar()
+        text_usuario.set(f'Dados do Usuário\n\n'
+                         f'{mostrarvalorcomponentes()}\n'
+                         f'{mostrarcomponentes()}\n'
+                         f'{mostrarAlimentacaoComponentes()}'
+                         f'{mostrarentradaTeP()}\n'
+                         f'{mostrarEquacao()}')
+        labelRetornoUsuario = Label(top, textvariable=text_usuario, background='#280659', fg='white').grid(row=8,column=1)
+
+
+        label_Grafico = Label(top, text='Gráfico:',font='Georgia 20',
+                              background='#280659',fg='white').grid(row=7, column=0)
+        img = PhotoImage(file='grafico.png')
+        label_imagem = Label(top, image=img).grid(row=8, column=0)
+
+    if numero_de_componentes.get() == 2:
+        label_dados_componentes = Label(top,text=f'Dados dos compostos {comp.get()} e {comp2.get()}',font='Georgia 20',
+                                        background='#280659',fg='white').grid(row=0,column=0)
+        label_componente1 = Label(top,text=f'Tc1= {Tc1} Pc1={Pc1}\nomega1 ={omega1}',
+                                  background='#280659',fg='white').grid(row=1,column=0)
+        label_componente2 = Label(top, text=f'Tc2= {Tc2} Pc2={Pc2}\nomega2 ={omega2}',
+                                  background='#280659',fg='white').grid(row=2,column=0)
+        label_matriz_Kij = Label(top, text='',
+                                 background='#280659',fg='white').grid(row=3,column=0)
+
+        label_informacoes= Label(top, text='Informações sobre a mistura',font='Georgia 16',
+                                 background='#280659',fg='white').grid(row=0,column=1)
+        label_raizes= Label(top, text=raizes_da_equacao,
+                            background='#280659',fg='white').grid(row=1,column=1)
+        label_fase= Label(top, text=f'O sistema se encontra na(s) fase(s): {fase_do_sistema}',
+                          background='#280659',fg='white').grid(row=2,column=1)
+        label_mais_estavel= Label(top, text=f'A fase mais estável é a: {fase_mais_estavel}',
+                                  background='#280659',fg='white').grid(row=3,column=1)
+
+        label_usu1 = Label(top, text='',background='#280659',fg='white').grid(row=4,column=1)
+        label_usu2 = Label(top, text='',background='#280659',fg='white').grid(row=5,column=1)
+        label_usu3 = Label(top, text='',background='#280659',fg='white').grid(row=6,column=1)
+        label_usu4 = Label(top, text='',background='#280659',fg='white').grid(row=7,column=1)
+
+        text_usuario = StringVar()
+        text_usuario.set(f'Dados do Usuário\n\n'
+                         f'{mostrarvalorcomponentes()}\n'
+                         f'{mostrarcomponentes()}\n'
+                         f'{mostrarAlimentacaoComponentes()}'
+                         f'{mostrarentradaTeP()}\n'
+                         f'{mostrarEquacao()}')
+        labelRetornoUsuario = Label(top,textvariable=text_usuario, background='#280659', fg='white').grid(row=8, column=1)
+
+
+
+        label_volumes = Label(top, text='Volumes obtidos',font='Georgia 16',background='#280659',fg='white').grid(row=4,column=0)
+        label_Vl = Label(top, text=f'O volume de líquido é de : {Vl:.3e} m³',background='#280659',fg='white').grid(row=5,column=0)
+        label_Vg = Label(top, text=f'O volume de vapor é de : {Vg:.3e} m³',background='#280659',fg='white').grid(row=6,column=0)
+
+        label_Prop_Saturadas = Label(top, text='Valores das Propriedades Saturadas',font='Georgia 16',
+                                     background='#280659',fg='white').grid(row=4,column=1)
+        label_PSat = Label(top, text=f'Psat = {Psat:.3e} Pa',background='#280659',fg='white').grid(row=5,column=1)
+        label_Vl_Sat = Label(top, text=f'Vl Sat = {VlSat:.3e} m³',background='#280659',fg='white').grid(row=6,column=1)
+        label_Vg_Sat = Label(top, text=f'Vg Sat = {VgSat:.3e} m³',background='#280659',fg='white').grid(row=7,column=1)
+
+        label_Grafico = Label(top, text='Gráfico:',font='Georgia 16',background='#280659',fg='white').grid(row=7,column=0)
+        img = PhotoImage(file='grafico.png')
+        label_imagem = Label(top, image=img).grid(row=8,column=0)
+
+#-----------------------------------------------------------------------------------------------------------------------
+
+
+#Botão que executa o Top Level
+#label_volume = Label(root,text='').grid(row=14,column=0)
+label_calcular_volume = Label(root,text='', background='#280659').grid(row=13,column=1)
+btn = Button(root, text='Calcular Volume',relief='raised',bd=7,font='Garamond 20',bg='#21ce9c',fg='white',anchor='n',
+             width=20,command=abrir).grid(row=14,column=1)
+
+#-----------------------------------------------------------------------------------------------------------------------
+root.config(menu=meuMenu)
+root.mainloop()
